@@ -106,6 +106,22 @@ const FavoritePage = () => {
     setDragOverIndex(null); // 드래그 중인 인덱스를 초기화
   };
 
+  const switchStock = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/api/stocks/select/change-rank", {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',  // 요청 본문이 JSON임을 지정
+        },
+        body: JSON.stringify(checkInfo),
+      });
+      console.log(orderInfo)
+      setOrderInfo([]);
+    } catch (error) {
+      console.error('데이터 가져오기 오류:', error);
+    }
+  }
+
   return (
     <>
       <ul className="my-7 flex flex-col h-full">
