@@ -8,6 +8,11 @@ const FavoritePage = () => {
   const [dragOverIndex, setDragOverIndex] = useState(null); // 드래깅 된 위치확인 값
   const [orderInfo, setOrderInfo] = useState([]);
 
+  //cardId 값
+  const cardId = 1;
+  const param = new URLSearchParams();
+  param.append("cardId", cardId);
+
   useEffect(() => {
     searchWishStocks();
   }, [])
@@ -15,7 +20,7 @@ const FavoritePage = () => {
   // 백엔드에서 GET 위시리스트 조회시, 위시리스트의 priority, stockName, stockPresentPrice, stockImage 를 갖고온다.
   const searchWishStocks = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/stocks/select", {
+      const response = await fetch(`http://localhost:8080/api/stocks/select?${param}`, {
         method: 'GET',
       });
 
@@ -55,30 +60,30 @@ const FavoritePage = () => {
 
     if (first == 3 && second == 1) {
       // 인데스 교환
-      updatedData[0].priority = 3; // 1번객체 3로 저장
-      updatedData[1].priority = 2; // 2번객체를 2로 저장 
-      updatedData[2].priority = 1; //  3번객체 1로저장 -> 결론 현재 저장 순위 3,2,1 순으로 되어있음
+      updatedData[0].priority = 2; // 1번객체 2로 저장
+      updatedData[1].priority = 3; // 2번객체를 3로 저장 
+      updatedData[2].priority = 1; //  3번객체 1로저장 -> 결론 현재 저장 순위 2,3,1 순으로 되어있음
 
       const draggedItem = updatedData[dragOverIndex]; // --3번에 대한 객체
       const otherItem = updatedData[1];
-      updatedData.splice(dragOverIndex, 1); // 드래그한 항목을 리스트에서 제거  -- 3번에 대한 객체 제거 => 1번과 2번만 남음 (3,2)
-      updatedData.splice(1, 1);// -- 2번에 대한 객체 => 3번만 남음 (3)
+      updatedData.splice(dragOverIndex, 1); // 드래그한 항목을 리스트에서 제거  -- 3번에 대한 객체 제거 => 1번과 2번만 남음 (2,3)
+      // updatedData.splice(1, 1);// -- 2번에 대한 객체 => 3번만 남음 (3)
 
-      updatedData.splice(dropIndex, 0, draggedItem); // 드래그한 항목을 새로운 위치에 추가 -- 1번부터 0개를 삭제하고 삭제했던 3번객체를 넣는다. (1,3)
-      updatedData.splice(1, 0, otherItem); // (1,2,3)
+      updatedData.splice(dropIndex, 0, draggedItem); // 드래그한 항목을 새로운 위치에 추가 -- 1번부터 0개를 삭제하고 삭제했던 3번객체를 넣는다. (1,2,3)
+      // updatedData.splice(1, 0, otherItem); // (1,2,3)
 
     } else if (first == 1 && second == 3) {
       // 인데스 교환
       updatedData[0].priority = 3; // 1번객체 3로 저장
-      updatedData[1].priority = 2; // 2번객체를 2로 저장 
-      updatedData[2].priority = 1; //  3번객체 1로저장 -> 결론 현재 저장 순위 3,2,1 순으로 되어있음
+      updatedData[1].priority = 2; // 2번객체를 1로 저장 
+      updatedData[2].priority = 1; //  3번객체 2로저장 -> 결론 현재 저장 순위 3,1,2 순으로 되어있음
 
       const draggedItem = updatedData[dragOverIndex]; // --1번에 대한 객체
       const otherItem = updatedData[1]; // 2번 객체
-      updatedData.splice(dragOverIndex, 1); // 드래그한 항목을 리스트에서 제거  -- 1번에 대한 객체 제거 => 1번과 2번만 남음 (2,1)
-      updatedData.splice(0, 1);// -- 2번에 대한 객체 => 3번만 남음 (1)
+      updatedData.splice(dragOverIndex, 1); // 드래그한 항목을 리스트에서 제거  -- 1번에 대한 객체 제거 => 1번과 2번만 남음 (1,2)
+      // updatedData.splice(0, 1);// -- 2번에 대한 객체 => 3번만 남음 (1)
 
-      updatedData.splice(1, 0, otherItem); // 드래그한 항목을 새로운 위치에 추가 -- 3번부터 0개를 삭제하고 삭제했던 1번객체를 넣는다. (1,,3)
+      // updatedData.splice(1, 0, otherItem); // 드래그한 항목을 새로운 위치에 추가 -- 3번부터 0개를 삭제하고 삭제했던 1번객체를 넣는다. (1,2,3)
       updatedData.splice(dropIndex, 0, draggedItem); // (1,2,3)
     } else {
       // 인데스 교환
@@ -113,7 +118,7 @@ const FavoritePage = () => {
         headers: {
           'Content-Type': 'application/json',  // 요청 본문이 JSON임을 지정
         },
-        body: JSON.stringify(checkInfo),
+        body: JSON.stringify(orderInfo),
       });
       console.log(orderInfo)
       setOrderInfo([]);
