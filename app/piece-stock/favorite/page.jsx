@@ -7,15 +7,19 @@ const FavoritePage = () => {
   const [wishInfo, setWishInfo] = useState([]); // 조회한 위쉬 정보를 저장
   const [dragOverIndex, setDragOverIndex] = useState(null); // 드래깅 된 위치확인 값
   const [orderInfo, setOrderInfo] = useState([]);
+  const [hoveredIndex, setHoveredIndex] = useState([{ order: 0 }, { order: 0 }, { order: 0 }]); // Hover된 항목의 인덱스를 관리
 
   useEffect(() => {
     searchWishStocks();
   }, [])
 
+  const cardId = 1;
+  const param = new URLSearchParams();
+  param.append("cardId", cardId)
   // 백엔드에서 GET 위시리스트 조회시, 위시리스트의 priority, stockName, stockPresentPrice, stockImage 를 갖고온다.
   const searchWishStocks = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/stocks/select", {
+      const response = await fetch(`http://localhost:8080/api/stocks/select?${param}`, {
         method: 'GET',
       });
 
@@ -106,6 +110,37 @@ const FavoritePage = () => {
     setDragOverIndex(null); // 드래그 중인 인덱스를 초기화
   };
 
+  const switchStock = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/api/stocks/select/change-rank", {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',  // 요청 본문이 JSON임을 지정
+        },
+        body: JSON.stringify(orderInfo),
+      });
+      console.log(orderInfo)
+    } catch (error) {
+      console.error('데이터 가져오기 오류:', error);
+    }
+  }
+
+  const handleDeleteClick = (index) => {
+    // 삭제 버튼 클릭 시 처리 (예: wishInfo에서 항목 제거)
+    console.log(`Deleted stock at index: ${index}`);
+  };
+
+
+  // 클릭 했을 때, 각 인덱스에 해당하는 제거박스 선택유무를 수정한다. + 0은 안보여주기 1은 보여주기 를 의미
+  const test = (index) => {
+    const newData = [...hoveredIndex]
+    index === 0 || index === 1 || index === 2
+      ? newData[index].order === 0
+        ? newData.splice(index, 1, { order: 1 })
+        : newData.splice(index, 1, { order: 0 })
+      : null;
+    setHoveredIndex(newData)
+  }
   return (
     <>
       <ul className="my-7 flex flex-col h-full">
@@ -123,14 +158,15 @@ const FavoritePage = () => {
 
         <div>
           {wishInfo.map((wishStock, index) => (
-            <div className={"flex cursor-grab"}
+            <div className={"flex relative cursor-grab"}
               key={wishStock.stockName}
               draggable
               onDragStart={(e) => handleDragStart(e, index)}
               onDragEnd={handleDragEnd}
               onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, index)}>
-              <div className="flex justify-between w-full">
+              onDrop={(e) => handleDrop(e, index)}
+              onClick={(e) => test(index)}>
+              <div className={`flex justify-between w-full transform  transition-all duration-500 ease-in-out ${hoveredIndex[index].order === 1 ? '-translate-x-12 opacity-100' : '-translate-x-0 opacity-100'}`}>
                 <div className="flex">
                   <div className="flex flex-col h-18 ml-2">
                     <p>{wishStock.priority}</p>
@@ -140,10 +176,20 @@ const FavoritePage = () => {
                     <p>{wishStock.stockName}</p>
                   </div>
                 </div>
-                <p>{wishStock.stockPresentPrice}원</p>
-                {/* <button onClick={(e) => deleteWish(e, index)}>버튼</button> */}
+                <div className="flex items-center">
+                  <p>{wishStock.stockPresentPrice}원</p>
+                </div>
+              </div>
+              <div className="flex items-center ">
+                <button
+                  className={`absolute right-0 transform  transition-all duration-500 ease-in-out ${hoveredIndex[index].order === 1 ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}
+                  onClick={() => handleDeleteClick(index)}
+                >
+                  삭제
+                </button>
               </div>
             </div>
+
           ))}
         </div>
         <div className="flex justify-between">
