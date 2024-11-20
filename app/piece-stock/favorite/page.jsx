@@ -2,12 +2,14 @@
 
 import Image from "Next/image"
 import { useEffect, useState } from "react";
+import BottomDrawer from "../../../components/overlay/bottomDrawer"
 
 const FavoritePage = () => {
   const [wishInfo, setWishInfo] = useState([]); // 조회한 위쉬 정보를 저장
   const [dragOverIndex, setDragOverIndex] = useState(null); // 드래깅 된 위치확인 값
   const [orderInfo, setOrderInfo] = useState([]);
   const [hoveredIndex, setHoveredIndex] = useState([{ order: 0 }, { order: 0 }, { order: 0 }]); // Hover된 항목의 인덱스를 관리
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     searchWishStocks();
@@ -141,6 +143,15 @@ const FavoritePage = () => {
       : null;
     setHoveredIndex(newData)
   }
+
+  const openDrawer = () => {
+    setIsDrawerOpen(true);
+  }
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+  }
+
   return (
     <>
       <ul className="my-7 flex flex-col h-full">
@@ -193,8 +204,9 @@ const FavoritePage = () => {
           ))}
         </div>
         <div className="flex justify-between">
-          <button className="border-2 border-black">종목자동추천</button>
+          <button className="border-2 border-black" onClick={openDrawer}>종목자동추천</button>
           <button className="border-2 border-black" onClick={switchStock} >저장</button>
+          <BottomDrawer isOpen={isDrawerOpen} onClose={closeDrawer} />
         </div>
       </ul>
     </>
