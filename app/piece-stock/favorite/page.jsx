@@ -10,12 +10,12 @@ const FavoritePage = () => {
   const [orderInfo, setOrderInfo] = useState([]);
   const [hoveredIndex, setHoveredIndex] = useState([{ order: 0 }, { order: 0 }, { order: 0 }]); // Hover된 항목의 인덱스를 관리
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
+  const param2 = new URLSearchParams();
   useEffect(() => {
     searchWishStocks();
   }, [])
 
-  const cardId = 1;
+  const cardId = 2;
   const param = new URLSearchParams();
   param.append("cardId", cardId)
   // 백엔드에서 GET 위시리스트 조회시, 위시리스트의 priority, stockName, stockPresentPrice, stockImage 를 갖고온다.
@@ -30,6 +30,19 @@ const FavoritePage = () => {
       }
       const data = await response.json(); // 응답을 JSON으로 파싱
       setWishInfo(data.data);
+    } catch (error) {
+      console.error('데이터 가져오기 오류:', error);
+    }
+  }
+
+  const deleteWishStocks = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/stocks/select?${param2.toString()}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('값이 조회되지 않았습니다.');
+      }
     } catch (error) {
       console.error('데이터 가져오기 오류:', error);
     }
@@ -101,7 +114,8 @@ const FavoritePage = () => {
     const total = [...orderInfo];
     const requestOrder = {
       currentOrder: first,
-      editOrder: second
+      editOrder: second,
+      cardId: cardId
     }
 
     total.push(requestOrder);
@@ -128,8 +142,25 @@ const FavoritePage = () => {
   }
 
   const handleDeleteClick = (index) => {
-    // 삭제 버튼 클릭 시 처리 (예: wishInfo에서 항목 제거)
-    console.log(`Deleted stock at index: ${index}`);
+    const order = index + 1;
+    param2.append("cardId", cardId)
+    param2.append("order", order)
+
+    const newData = [...wishInfo]
+    if (index === 0) {// 1번 삭제 하고, 2번을 1번, 3번을 2번으로 교체
+      newData[1].priority = 1; // 2번객체를 2로 저장 
+      newData[2].priority = 2;
+      newData.splice(index, 1) // 
+      setWishInfo(newData)
+    } else if (index === 1) {
+      newData[2].priority = 2;
+      newData.splice(index, 1)
+      setWishInfo(newData)
+    } else {
+      newData.splice(index, 1)
+    }
+    // deleteWishStocks();
+
   };
 
 
@@ -206,7 +237,11 @@ const FavoritePage = () => {
         <div className="flex justify-between">
           <button className="border-2 border-black" onClick={openDrawer}>종목자동추천</button>
           <button className="border-2 border-black" onClick={switchStock} >저장</button>
-          <BottomDrawer isOpen={isDrawerOpen} onClose={closeDrawer} />
+          <LargeModal isOpen={isDrawerOpen} onClose={closeDrawer} title={"hello"} description={"안녕하세요"}>
+            <div>
+              <p></p>
+            </div>
+          </LargeModal>
         </div>
       </ul>
     </>
