@@ -19,7 +19,7 @@ const Home = () => {
       }}>
       <HomeHeader /><br />
       <HomeBody1 /><br />
-      <HomeBody15 /><br />
+      {/* <HomeBody15 /><br /> */}
       <HomeBody2 /><br />
       <HomeBody3 /><br />
       <HomeBody4 /><br />
