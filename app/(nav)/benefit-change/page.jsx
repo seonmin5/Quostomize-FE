@@ -6,9 +6,11 @@ import ChangeBenefitBody2 from "../../../components/change-benefits/ChangeBenefi
 import ChangeBenefitBody3 from "../../../components/change-benefits/ChangeBenefitBody3";
 import ChangeBenefitFoot from "../../../components/change-benefits/ChangeBenefitFoot";
 import { useEffect, useState } from "react";
+import { useRouter } from 'next/navigation';
+import CardNotFoundModal from "../../../components/my-card/CardNotFoundModal";
 
 const ChangeBenefitsPage = () => {
-
+  const router = useRouter();
   const [benefitState, setBenefitState] = useState({
     categoryValues: [1, 1, 1, 1, 1],
     selectedCategories: [null, null, null, null, null],
@@ -20,7 +22,7 @@ const ChangeBenefitsPage = () => {
   const [buttonText, setButtonText] = useState('');
   const [authSuccess, setAuthSuccess] = useState(null);
   const [authTrigger, setAuthTrigger] = useState(0);
-
+  const [showNoCardModal, setShowNoCardModal] = useState(false); // 카드가 없는 경우 모달 상태
 
   const categoryMap = {
     1: '쇼핑',
@@ -69,10 +71,8 @@ const ChangeBenefitsPage = () => {
       const responsedata = await response.json();
 
       if (responsedata.data && responsedata.data) {
-
         setButtonText(responsedata.data);
       };
-
     } catch (error) {
       setError(error.message);
     }
@@ -94,6 +94,11 @@ const ChangeBenefitsPage = () => {
       }
       const data = await response.json();
 
+      if (!data.data || data.data.length === 0) {
+        setShowNoCardModal(true); // 카드가 없으면 모달을 띄우도록 설정
+        return;
+      }
+      
       const transformedData = transformBenefitData(data.data);
 
       const updatedState = {
@@ -103,7 +108,6 @@ const ChangeBenefitsPage = () => {
       };
       setBenefitState(updatedState);
 
-      console.log('Updated benefitState:', updatedState);
       setCardSequenceId(data.data[0].cardSequenceId);
     } catch (error) {
       setError(error.message);
@@ -128,28 +132,25 @@ const ChangeBenefitsPage = () => {
     const dd = String(date.getDate()).padStart(2, '0');
 
     const formattedDate = `${yyyy}-${mm}-${dd}`;
-    console.log("여기는 제대로 들어옴?", benefitState.categoryValues);
 
-    const filteredCategories = selectedCategories
-      .map((upperCategoryId, index) => ({
-        upperCategoryId,
-        categoryValue: categoryValues[index],
-        selectedOption: selectedOptions[index],
-      }))
-      .filter(item => item.upperCategoryId !== null);
+    const requestBody = selectedCategories
+        .map((upperCategoryId, index) => {
+          // benefitRate가 0인 경우도 유효한 값으로 처리
+          const benefitRate = Math.max(0, categoryValues[index] - 1);
 
-    const requestBody = filteredCategories.map((item) => ({
-      benefitEffectiveDate: formattedDate,
-      benefitRate: item.categoryValue - 1,
-      isActive: true,
-      cardSequenceId,
-      upperCategoryId: item.upperCategoryId,
-      lowerCategoryId: item.selectedOption,
-      secondaryAuthCode: authCode,
-    }));
+          if (upperCategoryId === null) return null;
 
-    console.log("Request Body:", JSON.stringify(requestBody));
-
+          return {
+            benefitEffectiveDate: formattedDate,
+            benefitRate,
+            isActive: true,
+            cardSequenceId,
+            upperCategoryId,
+            lowerCategoryId: selectedOptions[index] || null,
+            secondaryAuthCode: authCode,
+          };
+        })
+        .filter(Boolean);
 
     try {
       const response = await fetch(url, {
@@ -159,7 +160,7 @@ const ChangeBenefitsPage = () => {
         cache: "no-store",
         body: JSON.stringify(requestBody),
       });
-      console.log(response);
+
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -167,16 +168,6 @@ const ChangeBenefitsPage = () => {
         throw new Error(errorText);
 
       }
-
-      const responseText = await response.text();
-      if (!responseText) {
-        throw new Error("Empty response body");
-      }
-
-      const result = JSON.parse(responseText);
-      console.log(result);
-
-      setAuthSuccess(result.status === 400 ? "400" : "200");
 
       setAuthTrigger(prev => prev + 1);
     } catch (error) {
@@ -246,6 +237,18 @@ const ChangeBenefitsPage = () => {
     return <div>문제가 발생했습니다. 다시 시도해 주세요: {error}</div>
   }
 
+  if (showNoCardModal) {
+    return (
+      <CardNotFoundModal
+        isOpen={showNoCardModal}
+        onClose={() => {
+          setShowNoCardModal(false);
+          router.push('/home');
+        }}
+      />
+    );
+  }
+  
   if (!benefitState) {
     return <div>로딩 중...</div>;
   }
