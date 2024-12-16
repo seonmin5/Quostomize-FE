@@ -17,13 +17,17 @@ const SignupSecond = ({ setPage, secondForm, setSecondForm, regionNumber, setReg
     const router = useRouter();
 
     useEffect(() => {
+        if (typeof window === 'undefined') return;
+
         const script = document.createElement('script');
         script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
         script.async = true;
         document.body.appendChild(script);
 
         return () => {
-            document.body.removeChild(script);
+            if (script && script.parentNode) {
+                document.body.removeChild(script);
+            }
         };
     }, []);
 
@@ -115,6 +119,14 @@ const SignupSecond = ({ setPage, secondForm, setSecondForm, regionNumber, setReg
     }
 
     const handleSearch = () => {
+        if (typeof window === 'undefined') return;
+
+        const daum = window.daum;
+        if (!daum?.Postcode) {
+            console.error('Daum Postcode script not loaded');
+            return;
+        }
+
         new daum.Postcode({
             oncomplete: (data) => {
                 const newData = [...secondForm]
